@@ -5,7 +5,7 @@ ARRAY_SIZE:
 FIBONACCI_ARRAY:
 	.word	1, 1, 2, 3, 5, 8, 13, 21, 34, 55
 STR_str:
-	.asciiz "Huj"
+	.asciiz "Hunden, Katten, Glassen"
 
 	.globl DBG
 	.text
@@ -96,12 +96,15 @@ main:
 	
 	la	$a0, STR_str
 	jal 	reverse_string
+	li	$v0, 4
 	syscall
 		
 	lw	$ra, 0($sp)	# POP return address
 	addi	$sp, $sp, 4	
 	
-	jr	$ra
+	li	$v0, 10
+	syscall
+
 
 	
 integer_array_sum:
@@ -181,26 +184,33 @@ reverse_string:
 	sw $ra, 0($sp)
 	sw $s0, 4($sp)
 	
-	addi $s0, $zero, 0              # Initialize array index i to zero.
-	la $s1, ($a0)			# save address to string.
-	la $ra, done_length	
+	la $ra, done_length
 	j string_length			# get length of string
 	done_length:
-	subi $t4, $v0, 1		# save length
-	sra $t1, $v0, 1 		# divide length by 2 
 	
-	loop234: bge $s0, $t1, end	# exit if i bigger than length / 2
-	sub $t4, $t4, $s0		# offset = length - i
-	lb $t2, 0($a0)			# read first char of string
-	add $a0, $a0, $t4		# a0 = a0 + offset
-	lb $t3, 0($a0)			# read last char of string
-	sb $t2, 0($a0)			# save first to last position
-	sub $a0, $a0, $t4		# a0 = a0 - offset
-	sb $t3, 0($a0)			# save last char to first position
-	addi $s0, $s0, 1		# i++
-	j loop234			# next element
+	addi $s0, $zero, 0              # Initialize array index i to zero. (i = 0)
+	subi $t1, $v0, 1		# save length (j = length - 1)
+	sra $t2, $t1, 1 		# divide length by 2 
+	
+	loop3:	
+
+	add $t3, $a0, $s0       	# char[i]
+   	lb $t4, 0($t3)            	# temp1 = char[i]
+  
+  	add $t5, $a0, $t1		# char[j]	
+  	lb $t6, 0($t5)            	# temp2 = char[j]
+
+    	sb $t4, 0($t5)            	# char[j] = char[i]
+    	sb $t6, 0($t3)            	# char[i] = char[j]
+
+	subi $t1, $t1, 1		# j--
+    	addi $s0, $s0, 1        	# i++
+    	
+    	bge $s0, $t2, end		# exit if (i >= length / 2)
+	j loop3				# next element
 	
 	end:
+	
 	lw $ra, 0($sp)		        # Pop return address to caller
 	lw $s0, 4($sp)
 	addi $sp, $sp, 8
